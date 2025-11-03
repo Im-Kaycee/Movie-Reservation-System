@@ -4,10 +4,10 @@ from django.contrib.auth.models import User
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ['name']
+        fields = ['id','name']
 class MovieSerializer(serializers.ModelSerializer):
-    genres = serializers.StringRelatedField(many=True, read_only=True)
+    genres = GenreSerializer(many=True, read_only=True)
     class Meta:
         model = Movie
-        fields = ['title', 'description', 'genres', 'poster_image', 'duration', 'created_at']
+        fields = ['id','title', 'description', 'genres', 'poster_image', 'duration', 'created_at']
         

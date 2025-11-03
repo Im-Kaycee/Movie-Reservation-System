@@ -4,7 +4,7 @@ from showtimes.serializers import ShowtimeSerializer
 from showtimes.models import Showtime
 from .serializers import MovieSerializer
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
 from datetime import datetime
 from rest_framework.exceptions import ValidationError
@@ -70,3 +70,16 @@ class MovieDetailView(generics.RetrieveAPIView):
             return self.queryset.get(id=self.kwargs['id'])
         except Movie.DoesNotExist:
             raise NotFound(detail="Movie not found.")
+        
+class MovieListView(generics.ListAPIView):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        # Only return movies that have upcoming showtimes
+        upcoming_showtimes = Showtime.objects.filter(
+            end_time__gte=timezone.now()
+        )
+        movie_ids_with_showtimes = upcoming_showtimes.values_list('movie_id', flat=True).distinct()
+        return Movie.objects.filter(id__in=movie_ids_with_showtimes).order_by('-created_at')

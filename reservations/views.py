@@ -20,19 +20,26 @@ class ReservationListView(generics.ListAPIView):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     permission_classes = [IsAuthenticated]
-
     def get_queryset(self):
-        user = self.request.user
-        return Reservation.objects.filter(user=user, status='paid')
+        try:
+            user = self.request.user
+            # Return both paid and pending_payment reservations
+            return Reservation.objects.filter(
+                user=user, 
+                status__in=['paid', 'pending_payment']
+            ).order_by('-created_at')
+        except Reservation.DoesNotExist:
+             raise NotFound("No reservations found.")
 class CancelledReservationListView(generics.ListAPIView):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     permission_classes = [IsAuthenticated]
-
     def get_queryset(self):
-        user = self.request.user
-        return Reservation.objects.filter(user=user, status='cancelled')
-
+        try:
+            user = self.request.user
+            return Reservation.objects.filter(user=user, status='cancelled')
+        except Reservation.DoesNotExist:
+                raise NotFound("No cancelled reservations found.")
 class ReservationDetailView(generics.RetrieveAPIView):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
